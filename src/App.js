@@ -10,50 +10,44 @@ function App() {
   const [questions, setQuestions] = React.useState([])
   const [showAnswer, setShowAnswer] = React.useState(false)
 
-  async function getQuestions(){
-    const response = await fetch("https://opentdb.com/api.php?amount=5&category=9")
-    const data = await response.json()
-    // console.log(data)
-    if(data.response_code === 0){
-      setQuestions(data.results.map(question => {
-        const questionId = nanoid()
-        return {
-          id: questionId,
-          question: format(question.question),
-          choices: createChoiceObjects(question.incorrect_answers, question.correct_answer, question.type, questionId)
-        }
-      } ))}
-  }
-
   React.useEffect(() => {
+    async function getQuestions(){
+      const response = await fetch("https://opentdb.com/api.php?amount=5&category=9")
+      const data = await response.json()
+      // console.log(data)
+      if(data.response_code === 0){
+        setQuestions(data.results.map(question => {
+          const questionId = nanoid()
+          return {
+            id: questionId,
+            question: format(question.question),
+            choices: createChoiceObjects(question.incorrect_answers, question.correct_answer, question.type, questionId)
+          }
+        } ))}
+    }
+
+    function createChoiceObjects(incorrectChoices, correctChoice, questionType,questionId){
+      const choices = createChoicesArray(incorrectChoices,correctChoice, questionType)
+      const choiceObjects = choices.map(choice => {
+          return {
+            id: nanoid(),
+            parentQuestionId : questionId,
+            choice: format(choice),
+            isSelected: false,
+            selectChoiceFunc: selectChoice,
+            correctChoice: correctChoice === choice ? true: false,
+            showAnswer: false
+          }
+      })
+      return choiceObjects
+    }
+
     if(play){
       getQuestions()
     }
 
   }, [play])
 
-  function createChoiceObjects(incorrectChoices, correctChoice, questionType ,questionId){
-    const choices = createChoicesArray(incorrectChoices,correctChoice, questionType)
-    const choiceObjects = choices.map(choice => {
-        return {
-          id: nanoid(),
-          parentQuestionId : questionId,
-          choice: format(choice),
-          isSelected: false,
-          selectChoiceFunc: selectChoice,
-          correctChoice: correctChoice === choice ? true: false,
-          showAnswer: false
-        }
-        // return (<Choice 
-        // id={nanoid()} 
-        // questionId={questionId} 
-        // choice={format(choice)} 
-        // isSelected={false}
-        // selectChoice={selectChoice} 
-        // key={choice}/>)
-    })
-    return choiceObjects
-  }
 
   function createChoicesArray(incorrectChoices, correctChoice, questionType){
     const unshuffledChoices = [...incorrectChoices, correctChoice]
